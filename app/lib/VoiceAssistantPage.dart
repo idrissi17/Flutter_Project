@@ -1,12 +1,13 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 class VoiceAssistantPage extends StatefulWidget {
   const VoiceAssistantPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _VoiceAssistantPageState createState() => _VoiceAssistantPageState();
 }
 
@@ -14,10 +15,11 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
   final SpeechToText _speechToText = SpeechToText();
   bool _speechEnabled = false;
   String _lastWords = '';
-  final String _keyapi = "AIzaSyBh594D5yyxZhkqJzKMDO0umyaJtjlajzQ";
-  
-  // Controller for the TextField to update in real-time
-  final TextEditingController _controller = TextEditingController();
+  final String _apikey = 'AIzaSyBh594D5yyxZhkqJzKMDO0umyaJtjlajzQ';
+
+  // Controllers for TextFields
+  final TextEditingController _queryController = TextEditingController();
+  final TextEditingController _responseController = TextEditingController();
 
   @override
   void initState() {
@@ -47,15 +49,37 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
   void _onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
       _lastWords = result.recognizedWords;
-      _controller.text = _lastWords; // Update the TextField with recognized words
+      _queryController.text =
+          _lastWords; // Update the query field with recognized words
     });
+  }
+
+  /// Send the query to the Gemini API using google_generative_ai package
+  Future<void> _sendQueryToAssistant(String query) async {
+    try {
+      // Initialize the generative model
+      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: _apikey);
+      
+      final prompt = [Content.text(query)];
+      // Generate text using the input query
+      final response = await model.generateContent(prompt);
+
+      // Display the response
+      setState(() {
+        _responseController.text = response.text ?? "No response received.";
+      });
+    } catch (e) {
+      setState(() {
+        _responseController.text = "Error: ${e.toString()}";
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Voice Assistant'),
+        title: const Text('Voice Assistant - Gemini'),
         centerTitle: true,
         backgroundColor: Colors.blue,
       ),
@@ -77,14 +101,29 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 20),
-            // TextField with controller to show the speech results in real-time
+            // Query TextField
             TextField(
-              controller: _controller,
+              controller: _queryController,
               decoration: const InputDecoration(
                 hintText: 'Your query will appear here...',
               ),
             ),
             const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                _sendQueryToAssistant(_queryController.text);
+              },
+              child: const Text('Send Query'),
+            ),
+            const SizedBox(height: 20),
+            // Response TextField
+            TextField(
+              controller: _responseController,
+              readOnly: true,
+              decoration: const InputDecoration(
+                  hintText: 'Assistant\'s response will appear here...',
+                  border: OutlineInputBorder()),
+            ),
           ],
         ),
       ),
