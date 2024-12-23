@@ -1,4 +1,5 @@
 // import 'package:app/CnnPage.dart';
+import 'package:app/CnnPage.dart';
 import 'package:app/HomePage.dart';
 import 'package:app/Login.dart';
 import 'package:app/RegisterFom.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         "/register": (context) => RegisterForm(),
         "/home": (context) => const HomePage(),
         "/assistantVoicePage": (context) => const VoiceAssistantPage(),
+        // "/ModelCnnPage": (context) => const PageCnnModel()
       },
       title: 'Flutter Demo',
       theme: ThemeData(

@@ -59,7 +59,7 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
     try {
       // Initialize the generative model
       final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: _apikey);
-      
+
       final prompt = [Content.text(query)];
       // Generate text using the input query
       final response = await model.generateContent(prompt);
@@ -117,9 +117,10 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
             ),
             const SizedBox(height: 20),
             // Response TextField
-            TextField(
+            TextFormField(
               controller: _responseController,
               readOnly: true,
+              maxLines: null,
               decoration: const InputDecoration(
                   hintText: 'Assistant\'s response will appear here...',
                   border: OutlineInputBorder()),

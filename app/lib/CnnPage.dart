@@ -1,10 +1,9 @@
-// // ignore: file_names
 // import 'package:flutter/material.dart';
 // import 'package:tflite_flutter/tflite_flutter.dart';
 // import 'package:image_picker/image_picker.dart';
-// import 'dart:io';
 // import 'dart:typed_data';
 // import 'package:image/image.dart' as img;
+// import 'dart:io';
 
 // class PageCnnModel extends StatefulWidget {
 //   const PageCnnModel({super.key});
@@ -14,21 +13,23 @@
 // }
 
 // class _PageCnnModelState extends State<PageCnnModel> {
-//   late Interpreter _interpreter;
+//   Interpreter? _interpreter;
 //   String _result = "No result yet.";
-//   File? _imageFile;
+//   Uint8List? _imageBytes;
 //   final ImagePicker _picker = ImagePicker();
+//   List<String> _labels = [];
 
 //   @override
 //   void initState() {
 //     super.initState();
 //     _loadModel();
+//     _loadLabels();
 //   }
 
 //   /// Load the TFLite model
 //   Future<void> _loadModel() async {
 //     try {
-//       _interpreter = await Interpreter.fromAsset("cnn_model.tflite");
+//       _interpreter = await Interpreter.fromAsset("ann_model.tflite");
 //       print('Model loaded successfully');
 //     } catch (e) {
 //       print('Failed to load model: $e');
@@ -38,15 +39,34 @@
 //     }
 //   }
 
+//   /// Load labels from the labels.txt file
+//   Future<void> _loadLabels() async {
+//     try {
+//       final labelsData =
+//           await DefaultAssetBundle.of(context).loadString('labels.txt');
+//       setState(() {
+//         _labels =
+//             labelsData.split('\n').where((label) => label.isNotEmpty).toList();
+//       });
+//       print('Labels loaded successfully');
+//     } catch (e) {
+//       print('Failed to load labels: $e');
+//       setState(() {
+//         _result = "Failed to load labels.";
+//       });
+//     }
+//   }
+
 //   /// Pick an image using the Image Picker
 //   Future<void> _pickImage() async {
 //     try {
 //       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 //       if (pickedFile != null) {
+//         final bytes = await pickedFile.readAsBytes();
 //         setState(() {
-//           _imageFile = File(pickedFile.path);
+//           _imageBytes = bytes;
 //         });
-//         await _runInference();
+//         await _runInference(bytes);
 //       } else {
 //         setState(() {
 //           _result = "No image selected.";
@@ -61,17 +81,15 @@
 //   }
 
 //   /// Preprocess the image for the model
-//   List<List<List<double>>> _preprocessImage(File imageFile) {
-//     final image = img.decodeImage(imageFile.readAsBytesSync());
+//   List<List<List<double>>> _preprocessImage(Uint8List imageBytes) {
+//     final image = img.decodeImage(imageBytes);
 //     if (image == null) {
 //       throw Exception("Invalid image file.");
 //     }
 
-//     // Resize the image to the model's expected size (e.g., 224x224)
 //     final resizedImage = img.copyResize(image, width: 224, height: 224);
 
-//     // Convert image to a 3D list (height x width x channels) and normalize pixel values
-//     final input = List.generate(
+//     return List.generate(
 //       224,
 //       (y) => List.generate(
 //         224,
@@ -82,25 +100,32 @@
 //         },
 //       ),
 //     );
-
-//     return input;
 //   }
 
 //   /// Run inference on the image
-//   Future<void> _runInference() async {
-//     if (_imageFile == null) return;
+//   Future<void> _runInference(Uint8List imageBytes) async {
+//     if (_interpreter == null) {
+//       setState(() {
+//         _result = "Model is not loaded.";
+//       });
+//       return;
+//     }
 
 //     try {
-//       final input = _preprocessImage(_imageFile!);
+//       final input = _preprocessImage(imageBytes);
+//       final output =
+//           List.filled(_labels.length, 0.0).reshape([1, _labels.length]);
 
-//       // Prepare the output tensor
-//       final output = List.filled(1 * 10, 0.0)
-//           .reshape([1, 10]); // Adjust to your model's output shape
+//       _interpreter!.run(input, output);
 
-//       _interpreter.run([input], output);
+//       // Get the highest confidence label
+//       final resultIndex = output[0].indexWhere(
+//           (value) => value == output[0].reduce((a, b) => a > b ? a : b));
+//       final confidence = output[0][resultIndex];
 
 //       setState(() {
-//         _result = "Inference result: ${output[0].toString()}";
+//         _result =
+//             "Result: ${_labels[resultIndex]} with confidence: ${(confidence * 100).toStringAsFixed(2)}%";
 //       });
 //     } catch (e) {
 //       print('Failed to run inference: $e');
@@ -112,7 +137,7 @@
 
 //   @override
 //   void dispose() {
-//     _interpreter.close();
+//     _interpreter?.close();
 //     super.dispose();
 //   }
 
@@ -126,8 +151,8 @@
 //         child: Column(
 //           mainAxisAlignment: MainAxisAlignment.center,
 //           children: [
-//             _imageFile != null
-//                 ? Image.file(_imageFile!)
+//             _imageBytes != null
+//                 ? Image.memory(_imageBytes!)
 //                 : const Text("No image selected."),
 //             const SizedBox(height: 20),
 //             ElevatedButton(
