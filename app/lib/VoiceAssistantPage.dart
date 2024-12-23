@@ -14,7 +14,6 @@ class VoiceAssistantPage extends StatefulWidget {
 
 class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
   final SpeechToText _speechToText = SpeechToText();
-  bool _speechEnabled = false;
   String _lastWords = '';
   final String _apikey = 'AIzaSyBh594D5yyxZhkqJzKMDO0umyaJtjlajzQ';
 
@@ -30,7 +29,6 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
 
   /// Initialize the speech recognition service
   void _initSpeech() async {
-    _speechEnabled = await _speechToText.initialize();
     setState(() {});
   }
 

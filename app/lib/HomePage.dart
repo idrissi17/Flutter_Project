@@ -48,14 +48,15 @@ class HomePage extends StatelessWidget {
               leading: const Icon(Icons.category),
               title: const Text("Classification"),
               children: [
-                const ListTile(
-                  title: Text("ANN"),
-                ),
-                ListTile(
-                  title: const Text("CNN"),
+                 ListTile(
+                  title: const Text("ANN"),
                   onTap: () {
-                    Navigator.pushNamed(context, "/ModelCnnPage");
+                    Navigator.pushNamed(context, "/ModelAnnPage");
                   },
+                ),
+                const ListTile(
+                  title: Text("CNN"),
+                
                 ),
               ],
             ),
