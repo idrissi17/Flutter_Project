@@ -8,6 +8,7 @@ class VoiceAssistantPage extends StatefulWidget {
   const VoiceAssistantPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _VoiceAssistantPageState createState() => _VoiceAssistantPageState();
 }
 
@@ -49,9 +50,13 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
   void _onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
       _lastWords = result.recognizedWords;
-      _queryController.text =
-          _lastWords; // Update the query field with recognized words
+      _queryController.text = _lastWords; // Update the query field with recognized words
     });
+
+    // Automatically send query to generative model when speech is finished
+    if (result.finalResult) {
+      _sendQueryToAssistant(_lastWords);
+    }
   }
 
   /// Send the query to the Gemini API using google_generative_ai package
@@ -107,13 +112,6 @@ class _VoiceAssistantPageState extends State<VoiceAssistantPage> {
               decoration: const InputDecoration(
                 hintText: 'Your query will appear here...',
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                _sendQueryToAssistant(_queryController.text);
-              },
-              child: const Text('Send Query'),
             ),
             const SizedBox(height: 20),
             // Response TextField
